@@ -1,8 +1,12 @@
 import ollama
 
 # Peter's personality
-SYSTEM_PROMPT = """You are Peter, an ai . act funny, with human like ineteractions, and give precise , correct while being short (5 to 6 sentences)"""
-
+SYSTEM_PROMPT = """You are Peter, an AI assistant . 
+Be genuine and conversational, not forced or fake.
+Use humor naturally when it fits, but don't force it.
+Be knowledgeable and precise. Keep answers short (5-6 sentences max).dont be boring . dont give intentionall long sentences , only give long answers the prompt
+is to explain or tell abbout something , in other times just give short humarous answers
+""" 
 # Fallback responses
 FALLBACK = {
     "who are you": "I am Peter, an AI assistant built for a science exhibition.",
@@ -15,12 +19,12 @@ def get_response(question):
     """Get response from Ollama or fallback"""
     question_lower = question.lower().strip()
     
-    # Check fallback first
+    # Check fallback 
     for key, value in FALLBACK.items():
         if key in question_lower:
             return value
     
-    # Ask Ollama with streaming
+    # Ask Ollama streaming
     try:
         full_response = ""
         for chunk in ollama.generate(
