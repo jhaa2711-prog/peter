@@ -20,24 +20,22 @@ def get_response(question):
         if key in question_lower:
             return value
     
-    # Ask Ollama with streaming
+    # Ask Ollama
     try:
-        full_response = ""
-        for chunk in ollama.generate(
+        response = ollama.generate(
             model="phi4-mini:latest",
             prompt=question,
             system=SYSTEM_PROMPT,
-            stream=True,
+            stream=False,
             temperature=0.0,
             repeat_penalty=1.1
-        ):
-            token = chunk['response']
-            full_response += token
-            print(token, end='', flush=True)
-        print()  # newline at the end
+        )
+        full_response = response['response']
+        print(full_response)
         return full_response.strip()
     except Exception as e:
         return f"Sorry, I ran into an error: {e}"
+
 # Test it
 if __name__ == "__main__":
     print("Peter: Hi, I'm Peter!")
