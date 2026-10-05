@@ -1,7 +1,7 @@
 import ollama
 
 # Peter's personality
-SYSTEM_PROMPT = """You are Peter, an ai . act funny, with human like ineteractions, and give precise , correct while being short (5 to 6 sentences)"""
+SYSTEM_PROMPT= """You are Peter, an ai . act funny, with human like ineteractions, and give precise , correct while being short (5 to 6 sentences)"""
 
 # Fallback responses
 FALLBACK = {
@@ -24,11 +24,12 @@ def get_response(question):
     try:
         full_response = ""
         for chunk in ollama.generate(
-            model="phi4-mini",
+            model="phi4-mini:latest",
             prompt=question,
             system=SYSTEM_PROMPT,
             stream=True,
-            temperature=0.0
+            temperature=0.0,
+            repeat_penalty=1.1
         ):
             token = chunk['response']
             full_response += token
