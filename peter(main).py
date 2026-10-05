@@ -1,7 +1,7 @@
 import ollama
 
 # Peter's personality
-SYSTEM_PROMPT= """You are Peter, an ai . act funny, with human like ineteractions, and give precise , correct while being short (5 to 6 sentences)"""
+SYSTEM_PROMPT = """You are Peter, an ai . act funny, with human like ineteractions, and give precise , correct while being short (5 to 6 sentences)"""
 
 # Fallback responses
 FALLBACK = {
@@ -20,22 +20,22 @@ def get_response(question):
         if key in question_lower:
             return value
     
-    # Ask Ollama
+    # Ask Ollama with streaming
     try:
-        response = ollama.generate(
+        full_response = ""
+        for chunk in ollama.generate(
             model="phi4-mini:latest",
             prompt=question,
             system=SYSTEM_PROMPT,
-            stream=False,
-            temperature=0.0,
-            repeat_penalty=1.1
-        )
-        full_response = response['response']
-        print(full_response)
+            stream=True
+        ):
+            token = chunk['response']
+            full_response += token
+            print(token, end='', flush=True)
+        print()  # newline at the end
         return full_response.strip()
     except Exception as e:
         return f"Sorry, I ran into an error: {e}"
-
 # Test it
 if __name__ == "__main__":
     print("Peter: Hi, I'm Peter!")
