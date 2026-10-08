@@ -2,7 +2,70 @@ import ollama
 import subprocess
 import os
 import re
+import numpy as np
+import sounddevice as sd
+from faster_whisper import WhisperModel
 
+SAMPLE_RATE = 16000
+stt_model = WhisperModel("base.en", device="cpu", compute_type="int8")
+NOISE_FLOOR = 0.01  # gets overwritten by calibrate()
+
+def rms(data):
+    return float(np.sqrt(np.mean(data ** 2)))
+
+def calibrate(seconds=2):
+    """Measure background noise (fan, crowd) so we can ignore it."""
+    global NOISE_FLOOR
+    print(f"🔇 Calibrating for {seconds}s, stay quiet...")
+    audio = sd.rec(int(seconds * SAMPLE_RATE), samplerate=SAMPLE_RATE,
+                   channels=1, dtype="float32")
+    sd.wait()
+    NOISE_FLOOR = rms(audio)
+    print(f"Noise floor: {NOISE_FLOOR:.4f}")
+
+def listen(silence_seconds=1.0, max_seconds=15, debug=False):
+    """Record until the person stops talking, then transcribe."""
+    start_threshold = max(NOISE_FLOOR * 3.0, 0.015)  # must be clearly louder than noise to start
+    stop_threshold = max(NOISE_FLOOR * 1.8, 0.010)   # below this counts as silence
+
+    print("🎤 Listening...")
+    chunk = int(SAMPLE_RATE * 0.1)  # 100 ms
+    preroll = []        # keeps the last ~0.3 s so the first word isn't clipped
+    frames = []
+    started = False
+    silent_chunks = 0
+    max_chunks = int(max_seconds / 0.1)
+
+    with sd.InputStream(samplerate=SAMPLE_RATE, channels=1, dtype="float32") as stream:
+        for _ in range(max_chunks):
+            data, _ = stream.read(chunk)
+            volume = rms(data)
+            if debug:
+                print(f"vol={volume:.4f}", end="\r")
+
+            if not started:
+                preroll.append(data)
+                preroll = preroll[-3:]
+                if volume > start_threshold:
+                    started = True
+                    frames.extend(preroll)
+            else:
+                frames.append(data)
+                if volume < stop_threshold:
+                    silent_chunks += 1
+                    if silent_chunks >= silence_seconds / 0.1:
+                        break
+                else:
+                    silent_chunks = 0
+
+    if not frames:
+        return ""
+
+    audio = np.concatenate(frames).flatten()
+    segments, _ = stt_model.transcribe(
+        audio, language="en", beam_size=1, vad_filter=True
+    )
+    return " ".join(s.text for s in segments).strip()
 # Peter's personality
 SYSTEM_PROMPT = """You are Peter, an AI assistant built for a science exhibition. 
 Be genuine and conversational, not forced or fake.
@@ -80,12 +143,17 @@ def get_response(question):
 
 # Test it
 if __name__ == "__main__":
+    calibrate()
     print("Peter: Hi, I'm Peter!")
     speak("Hi, I'm Peter!")
     while True:
-        user_input = input("You: ").strip()
-        if user_input.lower() == "quit":
+        user_input = listen()
+        if not user_input:
+            continue
+        print(f"You: {user_input}")
+        if "quit" in user_input.lower() or "goodbye" in user_input.lower():
+            speak("Goodbye!")
             break
         print("Peter: ", end='', flush=True)
-        response = get_response(question=user_input)
+        get_response(user_input)
         print()
