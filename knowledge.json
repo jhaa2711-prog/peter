@@ -1,0 +1,26 @@
+[
+  {
+    "keywords": ["peter", "exhibition", "project", "built", "made", "created", "purpose"],
+    "text": "Peter is a voice assistant built for a school science exhibition. He listens through a microphone, turns speech into text with Whisper, thinks with a small local language model through Ollama, and speaks with the Piper voice engine."
+  },
+  {
+    "keywords": ["esp32", "body", "microphone", "speaker", "wifi", "hardware"],
+    "text": "The plan is for an ESP32 microcontroller to be Peter's body, handling the microphone, the speaker and Wi-Fi, while a laptop is his brain."
+  },
+  {
+    "keywords": ["laptop", "brain", "computer", "processor", "cpu", "gpu", "hardware", "old"],
+    "text": "Peter's brain runs on an old Intel i5-6300U laptop with no GPU, so nothing needs a powerful server."
+  },
+  {
+    "keywords": ["offline", "internet", "cloud", "online", "wifi"],
+    "text": "Peter does not need the internet. Speech recognition, the language model and the voice all run locally on the laptop."
+  },
+  {
+    "keywords": ["model", "llm", "language", "phi", "ollama", "whisper", "piper", "voice", "software"],
+    "text": "Peter uses Whisper for speech recognition, the phi4-mini language model through Ollama for thinking, and Piper for his voice."
+  },
+  {
+    "keywords": ["fail", "break", "error", "crash", "fallback", "backup", "wrong"],
+    "text": "If something fails, Peter can still answer common questions from a prewritten list of instant answers, so he does not go silent."
+  }
+]
