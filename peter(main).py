@@ -30,8 +30,10 @@ FILLERS = [
     "Good one, give me a second.",
     "Hold on, my web is loading.",
     "Ooh, let me think about that.",
-    "you think you can escape from HIM?",
-    "sandwhiches are better than burgers"
+    "sandwhiches are better than burgers",
+    "well thats the kind of question i suppose everyone to know , well nevermind ",
+    "wait , thats a very interestingly non-interesting question",
+    "who came first , a chicken or an egg??"
 ]
 TEMPERATURE = 0.6            # lower = steadier and more accurate, higher = quirkier
 SAMPLE_RATE = 16000
