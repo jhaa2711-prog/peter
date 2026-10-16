@@ -38,7 +38,8 @@ def get_response(question):
         return full_response.strip()
     except Exception as e:
         return f"Sorry, I ran into an error: {e}"
-# Test it
+# Test 
+
 if __name__ == "__main__":
     print("Peter: Hi, I'm Peter!")
     while True:

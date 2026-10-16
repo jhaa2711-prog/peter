@@ -531,3 +531,6 @@ if __name__ == "__main__":
         if result == "quit":
             break
         mode = choose_mode()
+
+
+print("hi, this is alive . dont make me angry , you know what happens when i am angry , dont yoou? , mwahhahaahhahahahahha")
