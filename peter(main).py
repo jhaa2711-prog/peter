@@ -30,6 +30,8 @@ FILLERS = [
     "Good one, give me a second.",
     "Hold on, my web is loading.",
     "Ooh, let me think about that.",
+    "you think you can escape from HIM?",
+    "sandwhiches are better than burgers"
 ]
 TEMPERATURE = 0.6            # lower = steadier and more accurate, higher = quirkier
 SAMPLE_RATE = 16000
@@ -531,6 +533,4 @@ if __name__ == "__main__":
         if result == "quit":
             break
         mode = choose_mode()
-
-
-print("hi, this is alive . dont make me angry , you know what happens when i am angry , dont yoou? , mwahhahaahhahahahahha")
+        print("hi, this is alive . dont make me angry , you know what happens when i am angry , dont yoou? , mwahhahaahhahahahahha")
