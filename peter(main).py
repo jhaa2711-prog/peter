@@ -33,7 +33,13 @@ FILLERS = [
     "sandwhiches are better than burgers",
     "well thats the kind of question i suppose everyone to know , well nevermind ",
     "wait , thats a very interestingly non-interesting question",
-    "who came first , a chicken or an egg??"
+    "who came first , a chicken or an egg??",
+    "well till i am thinking hard and using energy , for your some random question , can u tell me that , whats the full form of t-rex",
+    "why should i answer ? , haha just joking , OH MY GOD I HATE THIS",
+    "do you know spider-man ?? he is my favourite superhero",
+    "hmmmm",
+    "i guess , i guess , gimme a time to think bro PLEASE",
+    "touch grass"
 ]
 TEMPERATURE = 0.6            # lower = steadier and more accurate, higher = quirkier
 SAMPLE_RATE = 16000
