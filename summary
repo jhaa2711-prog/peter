@@ -1,0 +1,655 @@
+# 🕷️ PETER — Complete Build Summary
+
+Alright gentlemen, **we are officially leaving the planning arc and entering the BUILD ARC.** 💀
+
+Here’s the latest version of Peter, consolidated from everything we’ve discussed.
+
+---
+
+## 1. What Peter actually is
+
+**Peter is your school science-exhibition AI assistant.**
+
+The basic idea:
+
+> **A small physical AI assistant that can listen to people, understand what they say, generate an answer, speak it back, and explain how it works.**
+
+It is **Spider-Man/Peter-inspired**, but Peter isn't just a chatbot on a laptop. The interesting part is the architecture:
+
+```text
+             PERSON
+                │
+                ▼
+        🎤 ESP32 + MIC
+                │
+                │ Wi-Fi
+                ▼
+       ┌─────────────────┐
+       │  LAPTOP / BRAIN │
+       │                 │
+       │ Speech → Text   │
+       │       ↓         │
+       │ AI / Logic      │
+       │       ↓         │
+       │ Text → Speech   │
+       └─────────────────┘
+                │
+                │ Wi-Fi
+                ▼
+          🔊 ESP32 SPEAKER
+```
+
+The **laptop is the brain**.
+
+The **ESP32 is the body/interface**.
+
+---
+
+# 2. Hardware
+
+### Current brain
+
+The Ryzen 5 5500U machine is no longer available, so the current realistic target is your:
+
+**Intel i5-6300U laptop**
+
+You're deliberately building this around relatively old hardware.
+
+That actually fits the project nicely because you can demonstrate:
+
+> "This isn't running on some monster GPU server."
+
+The laptop handles the computationally expensive parts while the ESP32 handles physical I/O.
+
+### ESP32
+
+The ESP32 is responsible for:
+
+- 🎤 microphone input
+- 🔊 speaker output
+- Wi-Fi communication
+- potentially a small display
+- potentially LEDs/status indicators
+- physical interaction
+
+The **display is optional for the first version**.
+
+Don't let the display become the thing that prevents Peter from existing.
+
+---
+
+# 3. Network architecture
+
+The intended architecture was:
+
+```text
+              SCHOOL Wi-Fi / HOTSPOT
+                       │
+             ┌─────────┴─────────┐
+             │                   │
+          ESP32               Laptop
+        "body"                "brain"
+```
+
+The ESP32 communicates with the laptop over the network.
+
+So instead of trying to cram an LLM onto the ESP32:
+
+```text
+ESP32
+  ❌ LLM
+  ❌ STT
+  ❌ TTS
+```
+
+you do:
+
+```text
+ESP32
+  → audio
+  → laptop
+  → processing
+  → response
+  → ESP32
+  → speaker
+```
+
+Much more practical.
+
+---
+
+# 4. The AI pipeline
+
+The intended pipeline is:
+
+### Step 1 — Listen
+
+ESP32 captures the user's voice.
+
+```text
+🎤
+ ↓
+audio
+```
+
+### Step 2 — Send audio
+
+ESP32 sends the audio to the laptop.
+
+```text
+ESP32 ─────Wi-Fi─────> Laptop
+```
+
+### Step 3 — Speech-to-text
+
+Laptop converts:
+
+```text
+"Hey Peter, what is an ESP32?"
+```
+
+into:
+
+```text
+Hey Peter, what is an ESP32?
+```
+
+### Step 4 — Intelligence
+
+The laptop decides how to respond.
+
+The preferred direction is a **small local LLM through Ollama**, rather than depending completely on a cloud AI.
+
+Something like:
+
+```text
+STT
+ ↓
+Ollama
+ ↓
+response
+```
+
+The exact model can be chosen based on what the i5-6300U can realistically handle.
+
+---
+
+# 5. Peter should NOT depend completely on the LLM
+
+This is important.
+
+Your design is **online-first but resilient**.
+
+Meaning:
+
+```text
+             User speaks
+                  │
+                  ▼
+              STT works?
+                  │
+             ┌────┴────┐
+             │         │
+            YES        NO
+             │         │
+             ▼         ▼
+          AI/logic   fallback
+```
+
+And for common questions, Peter has a **local fallback system**.
+
+The rough target we discussed was around **100–150 common intents/questions**.
+
+Examples:
+
+```text
+"Who are you?"
+"What is ESP32?"
+"How does Peter work?"
+"What is artificial intelligence?"
+"What is your architecture?"
+"What time is it?"
+"Why are you using an ESP32?"
+"Why is the laptop needed?"
+"What happens if the internet goes down?"
+```
+
+etc.
+
+So if the fancy AI pipeline fails, Peter doesn't just become:
+
+> `ERROR 404: ROBOT BRAIN GONE 🗿`
+
+He can still respond.
+
+---
+
+# 6. Fallback architecture
+
+Think of Peter as having layers:
+
+```text
+                USER
+                  │
+                  ▼
+               MIC
+                  │
+                  ▼
+                 STT
+                  │
+        ┌─────────┴─────────┐
+        │                   │
+   Recognized?          Problem?
+        │                   │
+        ▼                   ▼
+   AI / Ollama        Local fallback
+        │                   │
+        └─────────┬─────────┘
+                  ▼
+               RESPONSE
+                  │
+                  ▼
+                 TTS
+                  │
+                  ▼
+               SPEAKER
+```
+
+The local fallback doesn't need to be intelligent.
+
+It can simply be:
+
+```js
+if (intent === "what_is_esp32") {
+    return "ESP32 is a low-cost microcontroller with Wi-Fi and Bluetooth...";
+}
+```
+
+Basically a **carefully designed local knowledge/intent layer**.
+
+---
+
+# 7. TTS
+
+After Peter generates the response:
+
+```text
+text
+ ↓
+TTS
+ ↓
+audio
+ ↓
+ESP32
+ ↓
+speaker
+```
+
+The laptop handles TTS.
+
+The ESP32 doesn't need to synthesize speech itself.
+
+---
+
+# 8. Retry behavior
+
+One of the design ideas we established was that Peter shouldn't immediately give up when something fails.
+
+For network/AI operations:
+
+```text
+Attempt 1
+   ↓
+failed?
+   ↓
+wait ~2–4 seconds
+   ↓
+Attempt 2
+   ↓
+failed?
+   ↓
+wait ~2–4 seconds
+   ↓
+Attempt 3
+   ↓
+fallback
+```
+
+So the user experience becomes more natural.
+
+Instead of:
+
+> "ERROR."
+
+Peter can have a sensible retry/fallback behavior.
+
+---
+
+# 9. What happens if the internet disappears?
+
+This is where the architecture gets interesting.
+
+Peter should remain **partially functional**.
+
+The local intent database can answer common questions even if online services aren't available.
+
+For example:
+
+```text
+Internet available
+       │
+       ▼
+ full Peter
+```
+
+versus:
+
+```text
+Internet unavailable
+       │
+       ▼
+ local Peter
+       │
+       ├── common questions
+       ├── project explanation
+       ├── identity
+       ├── basic status
+       └── predefined responses
+```
+
+So the project isn't entirely dependent on the internet.
+
+---
+
+# 10. What Peter should know about himself
+
+The local knowledge layer should contain information specifically about the project.
+
+For example:
+
+### Identity
+
+> "I am Peter, an AI assistant created for a science exhibition."
+
+### Hardware
+
+> "My physical interface uses an ESP32 for audio input, output and communication."
+
+### Brain
+
+> "My computational processing is handled by a laptop."
+
+### AI
+
+> "My system can use a local language model for generating responses."
+
+### Architecture
+
+> "The ESP32 acts as my physical interface while the laptop performs computationally intensive processing."
+
+### Failure handling
+
+> "If my primary processing path fails, I can fall back to predefined local responses."
+
+That makes Peter able to **explain his own engineering**, which is perfect for an exhibition.
+
+---
+
+# 11. Optional display
+
+The display is **not core functionality**.
+
+Later, it could show things like:
+
+```text
+┌─────────────────┐
+│     PETER       │
+│                 │
+│  Listening...   │
+│      ◉          │
+└─────────────────┘
+```
+
+or a Mimo-style animated face.
+
+But:
+
+**Core Peter first. Fancy face later.**
+
+---
+
+# 12. The Mimo-style face
+
+You had the idea of giving Peter a little animated personality/interface.
+
+Something like:
+
+```text
+Idle:
+  •ᴗ•
+
+Listening:
+  ◉ᴗ◉
+
+Thinking:
+  •_•
+
+Speaking:
+  ◉ᴗ◉
+```
+
+But again, this is a **later layer**, not something that should block the core build.
+
+---
+
+# 13. Software architecture
+
+I'd structure the laptop side roughly like this:
+
+```text
+peter/
+│
+├── main.py
+│
+├── config/
+│   └── config.json
+│
+├── audio/
+│   ├── stt
+│   └── tts
+│
+├── ai/
+│   ├── ollama
+│   └── prompts
+│
+├── fallback/
+│   ├── intents.json
+│   └── responses.json
+│
+├── network/
+│   └── server
+│
+└── logs/
+```
+
+Conceptually:
+
+```text
+main
+ │
+ ├── network
+ │      └── ESP32 communication
+ │
+ ├── STT
+ │
+ ├── intent detection
+ │
+ ├── Ollama
+ │
+ ├── fallback
+ │
+ └── TTS
+```
+
+Don't over-engineer it on day one.
+
+Get the pipeline working first.
+
+---
+
+# 14. ESP32 software
+
+ESP32's job should stay relatively simple.
+
+Something like:
+
+```text
+BOOT
+ ↓
+Connect Wi-Fi
+ ↓
+Connect to Peter server
+ ↓
+Wait
+ ↓
+Capture audio
+ ↓
+Send audio
+ ↓
+Receive response audio
+ ↓
+Play response
+ ↓
+Repeat
+```
+
+The ESP32 shouldn't be doing heavyweight AI work.
+
+---
+
+# 15. First version you should actually build
+
+Don't start with:
+
+> "Let's build the final Peter."
+
+Start with:
+
+### Prototype 1
+
+```text
+Laptop
+  ↓
+simple command
+  ↓
+response
+```
+
+Then:
+
+### Prototype 2
+
+```text
+Laptop
+  ↓
+STT
+  ↓
+text
+```
+
+Then:
+
+### Prototype 3
+
+```text
+text
+ ↓
+Ollama
+ ↓
+response
+```
+
+Then:
+
+### Prototype 4
+
+```text
+text
+ ↓
+TTS
+ ↓
+audio
+```
+
+Then connect the ESP32:
+
+### Prototype 5
+
+```text
+ESP32 🎤
+    ↓
+  Wi-Fi
+    ↓
+Laptop
+    ↓
+STT → AI → TTS
+    ↓
+  Wi-Fi
+    ↓
+ESP32 🔊
+```
+
+**THAT is Peter.**
+
+Everything else is expansion.
+
+---
+
+# 16. The final mental model
+
+The cleanest way to remember the entire project:
+
+> **ESP32 = Body**  
+> **Laptop = Brain**  
+> **Microphone = Ears**  
+> **Speaker = Mouth**  
+> **STT = Hearing/understanding speech**  
+> **Ollama/AI = Thinking**  
+> **TTS = Turning thoughts into speech**  
+> **Wi-Fi = Nervous system**  
+> **Fallback database = Survival instinct** 💀
+
+And the overall architecture:
+
+```text
+                 🧑 USER
+                    │
+                    │ voice
+                    ▼
+              🎤 ESP32 MIC
+                    │
+                    │ Wi-Fi
+                    ▼
+          ┌─────────────────────┐
+          │      PETER BRAIN    │
+          │                     │
+          │       STT           │
+          │        ↓            │
+          │   Intent / Router   │
+          │      ↙     ↘        │
+          │ Local      Ollama   │
+          │ fallback     │      │
+          │      ↘      ↙       │
+          │       Response      │
+          │          ↓          │
+          │         TTS         │
+          └──────────┬──────────┘
+                     │
+                     │ Wi-Fi
+                     ▼
+                 🔊 ESP32
+                     │
+                     ▼
+                 🗣️ USER
+```
+
